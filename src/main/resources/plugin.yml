@@ -1,0 +1,9 @@
+name: Conversations
+main: com.cogito.bukkit.conversations.Conversations
+version: 0.1
+commands:
+  converse:
+    description: say something
+    usage: |        
+        Incorrect usage of command /<command>. Examples:
+           /<command> player_name - start a conversation with a player.
