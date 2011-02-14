@@ -11,6 +11,8 @@ public class ConversationManager implements Runnable{
 
     private static final int WAIT_FOR_REPLY = 500;
     private static final int WAIT_PER_CHARACTER = 50;
+    
+    private Conversations plugin;
     private Player player;
     private Map<ConversationListener, ConversationAgent> agents;
     private Queue<ConversationAgent> conversations;
@@ -19,13 +21,13 @@ public class ConversationManager implements Runnable{
     private boolean waitingForReply;
 
     public ConversationManager(Conversations plugin, Player player) {
+        this.plugin = plugin;
         this.player = player;
         agents = Collections.synchronizedMap(new HashMap<ConversationListener, ConversationAgent>());
         currentAgent = null;
         this.questions = 0;
     }
 
-    @Override
     public void run() {
         while(conversing()){
             // pick an agent to be active - the next in the queue sounds good
@@ -106,12 +108,22 @@ public class ConversationManager implements Runnable{
         replied = (currentAgent == null)?false:currentAgent.sendReply(reply);
         if (replied) {
             waitingForReply = false;
+            this.questions--; // question has been dealt with
         }
         return replied;
     }
 
+    /**
+     * Register a question with the conversation manager.
+     * 
+     * @param conversationAgent the agent registering the question.
+     * @param question the question to be registered.
+     * 
+     * @return the number of questions before this one
+     */
     public int newQuestion(ConversationAgent conversationAgent, Message question) {
-        return (++this.questions);
+        plugin.manageThread(this);
+        return this.questions++;
     }
 
 }

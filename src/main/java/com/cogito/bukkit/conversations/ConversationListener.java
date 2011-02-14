@@ -33,6 +33,6 @@ public interface ConversationListener {
      * @param reply 
      * @return
      */
-    public boolean onReply(Message question, String reply);
+    public boolean onReply(Question question, String reply);
 
 }

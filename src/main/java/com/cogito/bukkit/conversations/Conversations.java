@@ -28,13 +28,11 @@ public class Conversations extends JavaPlugin {
         managers = Collections.synchronizedMap(new HashMap<String, ConversationManager>());
     }
 
-    @Override
     public void onDisable() {
         // TODO Auto-generated method stub
         
     }
 
-    @Override
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.PLAYER_CHAT, chatListener, Priority.Normal, this);
@@ -78,7 +76,6 @@ public class Conversations extends JavaPlugin {
             manager = new ConversationManager(this, player);
             managers.put(player.getName(), manager);
         }
-        manageThread(manager);
         return manager;
     }
 
@@ -86,7 +83,7 @@ public class Conversations extends JavaPlugin {
      * Ensure that there is a thread running for this manager.
      * @param manager
      */
-    private void manageThread(ConversationManager manager) {
+    void manageThread(ConversationManager manager) {
         if (manager == null) {
             return;
         }
