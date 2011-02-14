@@ -1,6 +1,5 @@
 package com.cogito.bukkit.conversations;
 
-import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerListener;
 
@@ -13,9 +12,11 @@ public class ChatListener extends PlayerListener {
     }
 
     public void onPlayerChat(PlayerChatEvent event) {
-        ConversationManager conversation = plugin.currentConversation();
-        if (conversation == null) { return; }
-        
+        ConversationManager conversation = plugin.getManager(event.getPlayer());
+        if (conversation == null) {
+            return;
+        }
+        // send the reply, and check if the reply was accepted
         if (conversation.newReply(event.getMessage())) {
             event.setCancelled(true);
         }

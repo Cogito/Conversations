@@ -13,6 +13,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import com.cogito.bukkit.conversations.ConversationAgent;
 
@@ -20,6 +21,7 @@ public class Conversations extends JavaPlugin {
 
     private Map<String, ConversationManager> managers;
     private final ChatListener chatListener = new ChatListener(this);
+    private Map<ConversationManager, Integer> managerTasks;
 
     public Conversations(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader) {
         super(pluginLoader, instance, desc, folder, plugin, cLoader);
@@ -68,8 +70,7 @@ public class Conversations extends JavaPlugin {
      * 
      * @return a ConversationManager who manages the conversations of the player.
      */
-    private ConversationManager getManager(Player player) {
-        // TODO Auto-generated method stub
+    ConversationManager getManager(Player player) {
         ConversationManager manager;
         if (managers.containsKey(player.getName())){
             manager = managers.get(player.getName());
@@ -77,12 +78,30 @@ public class Conversations extends JavaPlugin {
             manager = new ConversationManager(this, player);
             managers.put(player.getName(), manager);
         }
+        manageThread(manager);
         return manager;
     }
 
-    public ConversationManager currentConversation() {
-        // TODO Auto-generated method stub
-        return null;
+    /**
+     * Ensure that there is a thread running for this manager.
+     * @param manager
+     */
+    private void manageThread(ConversationManager manager) {
+        if (manager == null) {
+            return;
+        }
+        BukkitScheduler scheduler = getServer().getScheduler();
+        Integer task;
+        if (managerTasks.containsKey(manager)) {
+            task = managerTasks.get(manager);
+            if (scheduler.isCurrentlyRunning(task)) {
+                return;
+            } else {
+                task = scheduler.scheduleAsyncDelayedTask(this, manager);
+            }
+        } else {
+            task = scheduler.scheduleAsyncDelayedTask(this, manager);
+        }
+        managerTasks.put(manager, task);
     }
-
 }
