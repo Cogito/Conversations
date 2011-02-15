@@ -2,8 +2,10 @@ package com.cogito.bukkit.conversations;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.bukkit.entity.Player;
 
@@ -24,16 +26,19 @@ public class ConversationManager implements Runnable{
         this.plugin = plugin;
         this.player = player;
         agents = Collections.synchronizedMap(new HashMap<ConversationListener, ConversationAgent>());
+        conversations = new ConcurrentLinkedQueue<ConversationAgent>();
         currentAgent = null;
         this.questions = 0;
     }
 
     public void run() {
         while(conversing()){
+            System.out.println("waiting for a conversation");
             // pick an agent to be active - the next in the queue sounds good
-            ConversationAgent currentConvo = conversations.poll();
-            if (currentConvo != null) {
-                while (!currentConvo.messages.isEmpty()) {
+            currentAgent = conversations.poll();
+            if (currentAgent != null) {
+                System.out.println("we have a conversation!");
+                while (!currentAgent.messages.isEmpty()) {
                     // lets send all messages, ask all questions for this agent.
                     // TODO handle the conversation ending prematurely
                     //  - if plugin or player hangs up
@@ -44,30 +49,49 @@ public class ConversationManager implements Runnable{
                             Thread.sleep(WAIT_FOR_REPLY);
                         } catch (InterruptedException e) {
                             // we are going to loop again anyhow, so lets keep going
+                            // TODO check the meaningfulness of this end reason
+                            currentAgent.listener.onConversationEnd(ConversationEndReason.CONVERSATION_OVER, currentAgent.messages);
                         }
                     } else {
                         // send questions and messages, in order they are given
-                        Message currentMessage = currentConvo.messages.poll();
+                        Message currentMessage = currentAgent.messages.poll();
                         if (currentMessage != null) {
-                            // wait some time between sending each message
-                            try {
-                                Thread.sleep(currentMessage.getMessage().length() * WAIT_PER_CHARACTER);
-                            } catch (InterruptedException e) {
-                                // oh well couldn't wait, just send it anyways.
-                            }
+                            // TODO questions have a player - maybe check it here?
                             player.sendMessage(currentMessage.getMessage());
                             if (currentMessage instanceof Question) {
                                 // when we send a question, we wait for a reply
                                 waitingForReply = true;
                             }
+                            // wait some time after sending each message
+                            try {
+                                Thread.sleep(currentMessage.getMessage().length() * WAIT_PER_CHARACTER);
+                            } catch (InterruptedException e) {
+                                // oh well couldn't wait, just keep going.
+                            }
                         }
                     }
-                    
-                    
                 }
                 // add conversation to the end of the queue
-                conversations.add(currentConvo);
+                //conversations.add(currentAgent);
             }
+            try {
+                Thread.sleep(500);
+                if (!waitingForReply) {
+                    currentAgent = null;
+                }
+            } catch (InterruptedException e) {
+                System.out.println("Shutting down conversation");
+                Iterator<ConversationAgent> itr = conversations.iterator();
+                while (itr.hasNext()) {
+                    ConversationAgent agent = itr.next();
+                    agent.listener.onConversationEnd(ConversationEndReason.CONVERSATION_OVER, agent.messages);
+                }
+                currentAgent = null;
+                return;
+            } finally {
+                
+            }
+            
         }
     }
 
@@ -77,8 +101,7 @@ public class ConversationManager implements Runnable{
      * @return
      */
     private boolean conversing() {
-        // TODO Auto-generated method stub
-        return true;
+        return !conversations.isEmpty();
     }
 
     /**
@@ -105,7 +128,9 @@ public class ConversationManager implements Runnable{
 
     public boolean newReply(String reply) {
         boolean replied;
+        
         replied = (currentAgent == null)?false:currentAgent.sendReply(reply);
+        System.out.println("player chat event");
         if (replied) {
             waitingForReply = false;
             this.questions--; // question has been dealt with
@@ -122,8 +147,14 @@ public class ConversationManager implements Runnable{
      * @return the number of questions before this one
      */
     public int newQuestion(ConversationAgent conversationAgent, Message question) {
+        conversations.add(conversationAgent);
         plugin.manageThread(this);
         return this.questions++;
+    }
+
+    public void newMessage(ConversationAgent conversationAgent, Message message) {
+        conversations.add(conversationAgent);
+        plugin.manageThread(this);
     }
 
 }

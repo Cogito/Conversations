@@ -26,6 +26,7 @@ public class Conversations extends JavaPlugin {
     public Conversations(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader) {
         super(pluginLoader, instance, desc, folder, plugin, cLoader);
         managers = Collections.synchronizedMap(new HashMap<String, ConversationManager>());
+        managerTasks = Collections.synchronizedMap(new HashMap<ConversationManager, Integer>());
     }
 
     public void onDisable() {
@@ -55,7 +56,9 @@ public class Conversations extends JavaPlugin {
      * @return
      */
     public ConversationAgent startConversation(Player player, ConversationListener listener) {
-        return getManager(player).getAgent(listener);
+        ConversationManager manager = getManager(player);
+        return (manager==null)?null:manager.getAgent(listener);
+        
     }
 
     /**
@@ -70,6 +73,14 @@ public class Conversations extends JavaPlugin {
      */
     ConversationManager getManager(Player player) {
         ConversationManager manager;
+        if (managers == null) {
+            System.out.println("managers has not been instantiated!!!");
+            return null;
+        }
+        if (player == null) {
+            System.out.println("player is null!!!");
+            return null;
+        }
         if (managers.containsKey(player.getName())){
             manager = managers.get(player.getName());
         } else {
@@ -84,6 +95,7 @@ public class Conversations extends JavaPlugin {
      * @param manager
      */
     void manageThread(ConversationManager manager) {
+        System.out.println("managing threads");
         if (manager == null) {
             return;
         }

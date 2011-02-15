@@ -1,6 +1,7 @@
 package com.cogito.bukkit.conversations;
 
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 
@@ -9,14 +10,15 @@ import java.util.Queue;
  */
 public class ConversationAgent {
 
-    private ConversationManager manager;
-    private ConversationListener listener;
+    ConversationManager manager;
+    ConversationListener listener;
     Queue<Message> messages;
     private Question currentQuestion;
 
     public ConversationAgent(ConversationManager manager, ConversationListener listener) {
         this.manager = manager;
         this.listener = listener;
+        this.messages = new ConcurrentLinkedQueue<Message>();
     }
 
     /**
@@ -31,6 +33,7 @@ public class ConversationAgent {
     public void sendMessage(Message message){
         // TODO sync properly
         this.messages.add(message);
+        manager.newMessage(this, message);
     }
 
     /**
@@ -54,6 +57,7 @@ public class ConversationAgent {
     }
 
     boolean sendReply(String reply){
+        System.out.println("agent is sending reply");
         boolean answered = listener.onReply(this.currentQuestion, reply);
         return answered;
     }
