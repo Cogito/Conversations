@@ -1,6 +1,7 @@
 package com.cogito.bukkit.conversations;
 
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerListener;
 
 public class ChatListener extends PlayerListener {
@@ -13,7 +14,7 @@ public class ChatListener extends PlayerListener {
 
     public void onPlayerChat(PlayerChatEvent event) {
         System.out.println("player chat event");
-        ConversationManager conversation = plugin.getManager(event.getPlayer());
+        ConversationManager conversation = plugin.getManager(event.getPlayer().getName());
         if (conversation == null) {
             System.out.println("no manager could be found :(");
             return;
@@ -24,5 +25,13 @@ public class ChatListener extends PlayerListener {
             System.out.println("reply received");
             event.setCancelled(true);
         }
+    }
+    
+    public void onPlayerJoin(PlayerEvent event) {
+        ConversationManager conversation = plugin.getManager(event.getPlayer().getName());
+        if (conversation == null) {
+            return;
+        }
+        conversation.plugin.manageThread(conversation);
     }
 }

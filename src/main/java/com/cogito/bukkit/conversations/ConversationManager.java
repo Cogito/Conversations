@@ -14,7 +14,7 @@ public class ConversationManager implements Runnable{
     private static final int WAIT_FOR_REPLY = 300;
     private static final int WAIT_PER_CHARACTER = 10;
     
-    private Conversations plugin;
+    Conversations plugin;
     private String playerName;
     private Player player;
     private Map<ConversationListener, ConversationAgent> agents;
@@ -34,12 +34,10 @@ public class ConversationManager implements Runnable{
 
     public void run() {
         while(conversing()){
-            System.out.println("waiting for a conversation");
             try {
             // pick an agent to be active - the next in the queue sounds good
             currentAgent = conversations.poll();
             if (currentAgent != null) {
-                System.out.println("we have a conversation!");
                 while (!currentAgent.messages.isEmpty()) {
                     // lets send all messages, ask all questions for this agent.
                     // TODO handle the conversation ending prematurely
@@ -82,10 +80,7 @@ public class ConversationManager implements Runnable{
                 }
                 currentAgent = null;
                 return;
-            } finally {
-                
             }
-            
         }
     }
 

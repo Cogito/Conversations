@@ -37,6 +37,7 @@ public class Conversations extends JavaPlugin {
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.PLAYER_CHAT, chatListener, Priority.Normal, this);
+        pm.registerEvent(Event.Type.PLAYER_JOIN, chatListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
         System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!" );
