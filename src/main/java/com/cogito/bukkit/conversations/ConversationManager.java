@@ -11,10 +11,11 @@ import org.bukkit.entity.Player;
 
 public class ConversationManager implements Runnable{
 
-    private static final int WAIT_FOR_REPLY = 500;
-    private static final int WAIT_PER_CHARACTER = 50;
+    private static final int WAIT_FOR_REPLY = 300;
+    private static final int WAIT_PER_CHARACTER = 10;
     
     private Conversations plugin;
+    private String playerName;
     private Player player;
     private Map<ConversationListener, ConversationAgent> agents;
     private Queue<ConversationAgent> conversations;
@@ -22,9 +23,9 @@ public class ConversationManager implements Runnable{
     private int questions;
     private boolean waitingForReply;
 
-    public ConversationManager(Conversations plugin, Player player) {
+    public ConversationManager(Conversations plugin, String playerName) {
         this.plugin = plugin;
-        this.player = player;
+        this.playerName = playerName;
         agents = Collections.synchronizedMap(new HashMap<ConversationListener, ConversationAgent>());
         conversations = new ConcurrentLinkedQueue<ConversationAgent>();
         currentAgent = null;
@@ -34,6 +35,7 @@ public class ConversationManager implements Runnable{
     public void run() {
         while(conversing()){
             System.out.println("waiting for a conversation");
+            try {
             // pick an agent to be active - the next in the queue sounds good
             currentAgent = conversations.poll();
             if (currentAgent != null) {
@@ -45,36 +47,27 @@ public class ConversationManager implements Runnable{
                     //  - if player times out
                     if (waitingForReply) {
                         // if a question is asked, wait for a reply - just wait, as the reply is handled by ChatListener
-                        try {
                             Thread.sleep(WAIT_FOR_REPLY);
-                        } catch (InterruptedException e) {
-                            // we are going to loop again anyhow, so lets keep going
-                            // TODO check the meaningfulness of this end reason
-                            currentAgent.listener.onConversationEnd(ConversationEndReason.CONVERSATION_OVER, currentAgent.messages);
-                        }
                     } else {
                         // send questions and messages, in order they are given
                         Message currentMessage = currentAgent.messages.poll();
                         if (currentMessage != null) {
                             // TODO questions have a player - maybe check it here?
-                            player.sendMessage(currentMessage.getMessage());
+                            //player.sendMessage(currentMessage.getMessage());
+                            currentMessage.send(plugin.getServer());
                             if (currentMessage instanceof Question) {
                                 // when we send a question, we wait for a reply
                                 waitingForReply = true;
                             }
                             // wait some time after sending each message
-                            try {
-                                Thread.sleep(currentMessage.getMessage().length() * WAIT_PER_CHARACTER);
-                            } catch (InterruptedException e) {
-                                // oh well couldn't wait, just keep going.
-                            }
+                            Thread.sleep(currentMessage.getMessage().length() * WAIT_PER_CHARACTER);
                         }
                     }
                 }
                 // add conversation to the end of the queue
                 //conversations.add(currentAgent);
             }
-            try {
+            
                 Thread.sleep(500);
                 if (!waitingForReply) {
                     currentAgent = null;
@@ -84,6 +77,7 @@ public class ConversationManager implements Runnable{
                 Iterator<ConversationAgent> itr = conversations.iterator();
                 while (itr.hasNext()) {
                     ConversationAgent agent = itr.next();
+                    // TODO check the meaningfulness of this end reason
                     agent.listener.onConversationEnd(ConversationEndReason.CONVERSATION_OVER, agent.messages);
                 }
                 currentAgent = null;
@@ -101,7 +95,8 @@ public class ConversationManager implements Runnable{
      * @return
      */
     private boolean conversing() {
-        return !conversations.isEmpty();
+        player = plugin.getServer().getPlayer(playerName);
+        return !conversations.isEmpty() && (player != null && player.isOnline());
     }
 
     /**

@@ -1,22 +1,24 @@
 package com.cogito.bukkit.conversations;
 
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 
 public class Message {
-    private final Player player;
+    private final String playerName;
     private final String message;
     private boolean sent;
 
-    public Message(Player player, String message) {
+    public Message(String playerName, String message) {
         super();
-        this.player = player;
+        this.playerName = playerName;
         this.message = message;
         this.sent = false;
     }
 
-    final boolean send(){
+    final boolean send(Server server){
         synchronized(this) {
-            if (player.isOnline() && !sent) {
+            Player player = getPlayer(server);
+            if (player != null && player.isOnline() && !sent) {
                 player.sendMessage(message);
                 sent = true;
                 return true;
@@ -26,8 +28,8 @@ public class Message {
         }
     }
 
-    public final Player getPlayer() {
-        return player;
+    public final Player getPlayer(Server server) {
+        return server.getPlayer(playerName);
     }
 
     public final String getMessage() {

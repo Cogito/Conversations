@@ -1,10 +1,8 @@
 package com.cogito.bukkit.conversations;
 
-import org.bukkit.entity.Player;
-
 public class Question extends Message {
 
-    public Question(Player player, String message) {
-        super(player, message);
+    public Question(String string, String message) {
+        super(string, message);
     }
 }

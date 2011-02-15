@@ -51,12 +51,12 @@ public class Conversations extends JavaPlugin {
      * This listener must be thread safe, and should optimally only listen to one conversation
      * (though it could potentially listen to more).
      * 
-     * @param player the Player with whom you would like to start a conversation.
+     * @param playerName the player with whom you would like to start a conversation.
      * @param listener the ConversationListener that will receive replies to your questions.
      * @return
      */
-    public ConversationAgent startConversation(Player player, ConversationListener listener) {
-        ConversationManager manager = getManager(player);
+    public ConversationAgent startConversation(String playerName, ConversationListener listener) {
+        ConversationManager manager = getManager(playerName);
         return (manager==null)?null:manager.getAgent(listener);
         
     }
@@ -67,25 +67,25 @@ public class Conversations extends JavaPlugin {
      * Each player only ever has one active ConversationManager, though the manager may not be the same at all times.
      * If a player does not have an active manager, a new one will be created, otherwise the active one will be returned.
      * 
-     * @param player the Player whose ConversationManager you would like.
+     * @param playerName the Player whose ConversationManager you would like.
      * 
      * @return a ConversationManager who manages the conversations of the player.
      */
-    ConversationManager getManager(Player player) {
+    ConversationManager getManager(String playerName) {
         ConversationManager manager;
         if (managers == null) {
             System.out.println("managers has not been instantiated!!!");
             return null;
         }
-        if (player == null) {
+        if (playerName == null) {
             System.out.println("player is null!!!");
             return null;
         }
-        if (managers.containsKey(player.getName())){
-            manager = managers.get(player.getName());
+        if (managers.containsKey(playerName)){
+            manager = managers.get(playerName);
         } else {
-            manager = new ConversationManager(this, player);
-            managers.put(player.getName(), manager);
+            manager = new ConversationManager(this, playerName);
+            managers.put(playerName, manager);
         }
         return manager;
     }
