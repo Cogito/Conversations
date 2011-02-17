@@ -28,6 +28,10 @@ public class Message {
         }
     }
 
+    public final String getPlayerName() {
+        return playerName;
+    }
+
     public final Player getPlayer(Server server) {
         return server.getPlayer(playerName);
     }
