@@ -67,6 +67,7 @@ public class ConversationManager implements Runnable{
                                 }
                                 //currentMessage.send(plugin.getServer());
                                 if (currentMessage instanceof Question) {
+                                    System.out.println("Waiting for reply.");
                                     // when we send a question, we wait for a reply
                                     currentQuestion = (Question) currentMessage;
                                     waitingForReply = true;

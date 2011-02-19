@@ -44,5 +44,7 @@ public class Message {
         return sent;
     }
 
-
+    public String toString() {
+        return "'"+message.substring(0, 5)+"...'_"+this.getClass().getSimpleName()+Integer.toHexString(hashCode());
+    }
 }
