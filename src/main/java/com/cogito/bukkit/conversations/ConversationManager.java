@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 
 public class ConversationManager implements Runnable{
 
-    private static final int WAIT_FOR_REPLY = 300;
+    private static final int WAIT_FOR_REPLY = 500;
     private static final int WAIT_PER_CHARACTER = 10;
     
     Conversations plugin;
@@ -47,20 +47,17 @@ public class ConversationManager implements Runnable{
                         //  - if plugin or player hangs up
                         //  - if player times out
                         if (waitingForReply) {
+                            //System.out.println("waiting");
                             // if a question is asked, wait for a reply - just wait, as the reply is handled by ChatListener
                             Thread.sleep(WAIT_FOR_REPLY);
                         } else {
                             // send questions and messages, in order they are given
                             Message currentMessage = currentAgent.messages.poll();
-                            System.out.println("Dealing with message '"+currentMessage.getMessage()+"'");
                             if (currentMessage != null) {
+                                System.out.println("Dealing with message '"+currentMessage.getMessage()+"'");
                                 try {
                                     // TODO questions have a player - maybe check it here?
                                     //player.sendMessage(currentMessage.getMessage());
-                                    /*
-                                Method sendmethod = Message.class.getDeclaredMethod("send", Server.class);
-                                sendmethod.setAccessible(true);
-                                sendmethod.invoke(currentMessage, plugin.getServer());*/
                                     sendMessage(currentMessage);
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -80,8 +77,6 @@ public class ConversationManager implements Runnable{
                             System.out.println(">>>> how did the agent get null!?");
                         }
                     }
-                    // add conversation to the end of the queue
-                    //conversations.add(currentAgent);
                 }
 
                 Thread.sleep(500);
@@ -100,7 +95,7 @@ public class ConversationManager implements Runnable{
                 return;
             }
         }
-        System.out.println("Manager finished.");
+        System.out.println(this + " finished.");
     }
 
     /**
@@ -139,6 +134,7 @@ public class ConversationManager implements Runnable{
     }
 
     public boolean newReply(String reply) {
+        System.out.println("Reply received: "+reply);
         boolean replied;
         replied = (currentAgent == null)?false:currentAgent.sendReply(currentQuestion, reply);
         if (replied) {
@@ -157,18 +153,18 @@ public class ConversationManager implements Runnable{
      * @return the number of questions before this one
      */
     public int newQuestion(ConversationAgent conversationAgent, Message question) {
-        if (!conversations.contains(conversationAgent)) {
-            conversations.add(conversationAgent);
-        }
-        plugin.manageThread(this);
+        newMessage(conversationAgent, question);
         return this.questions++;
     }
 
     public void newMessage(ConversationAgent conversationAgent, Message message) {
-        if (!conversations.contains(conversationAgent)) {
-            conversations.add(conversationAgent);
+        synchronized (conversations) {
+            if (!conversationAgent.equals(currentAgent) && !conversations.contains(conversationAgent)) {
+                //System.out.println("adding "+conversationAgent+" to conversation.");
+                conversations.add(conversationAgent);
+            }
+            plugin.manageThread(this);
         }
-        plugin.manageThread(this);
     }
 
     final boolean sendMessage(Message message){

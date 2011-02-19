@@ -30,7 +30,8 @@ public class Conversations extends JavaPlugin {
 
     public void onDisable() {
         // TODO Auto-generated method stub
-        
+        getServer().getScheduler().cancelTasks(this);
+        managerTasks.clear();
     }
 
     public void onEnable() {
@@ -99,23 +100,26 @@ public class Conversations extends JavaPlugin {
      * @param manager
      */
     void manageThread(ConversationManager manager) {
-        if (manager == null) {
-            return;
-        }
-        BukkitScheduler scheduler = getServer().getScheduler();
-        Integer task;
-        if (managerTasks.containsKey(manager)) {
-            task = managerTasks.get(manager);
-            if (scheduler.isCurrentlyRunning(task)) {
-                System.out.println(manager+" still running.");
+        synchronized(managerTasks) {
+            if (manager == null) {
                 return;
+            }
+            BukkitScheduler scheduler = getServer().getScheduler();
+            Integer task;
+            if (managerTasks.containsKey(manager)) {
+                task = managerTasks.get(manager);
+                if (scheduler.isCurrentlyRunning(task)) {
+                    System.out.println(manager+" still running.");
+                    return;
+                } else {
+                    System.out.println("Starting up "+manager);
+                    task = scheduler.scheduleAsyncDelayedTask(this, manager);
+                }
             } else {
                 System.out.println("Starting up "+manager);
                 task = scheduler.scheduleAsyncDelayedTask(this, manager);
             }
-        } else {
-            task = scheduler.scheduleAsyncDelayedTask(this, manager);
+            managerTasks.put(manager, task);
         }
-        managerTasks.put(manager, task);
     }
 }
