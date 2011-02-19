@@ -13,7 +13,6 @@ public class ConversationAgent {
     ConversationManager manager;
     ConversationListener listener;
     Queue<Message> messages;
-    private Question currentQuestion;
 
     public ConversationAgent(ConversationManager manager, ConversationListener listener) {
         this.manager = manager;
@@ -56,9 +55,12 @@ public class ConversationAgent {
         return (manager.newQuestion(this, question) == 0);
     }
 
-    boolean sendReply(String reply){
-        System.out.println("agent is sending reply");
-        boolean answered = listener.onReply(this.currentQuestion, reply);
+    boolean sendReply(Question question, String reply){
+        boolean answered = listener.onReply(question, reply);
         return answered;
+    }
+    
+    public String toString() {
+        return listener.toString()+"_ConversationAgent"+Integer.toHexString(hashCode())+" Messages: "+messages.toString();
     }
 }

@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 public class Message {
     private final String playerName;
     private final String message;
-    private boolean sent;
+    boolean sent; // default so I can set it in ConversationManager. private if using this.send()
 
     public Message(String playerName, String message) {
         super();

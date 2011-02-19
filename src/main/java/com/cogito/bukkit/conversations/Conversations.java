@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Server;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -37,6 +36,7 @@ public class Conversations extends JavaPlugin {
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.PLAYER_CHAT, chatListener, Priority.Normal, this);
+        //pm.registerEvent(Event.Type.PLAYER_COMMAND, chatListener, Priority.Normal, this);
         pm.registerEvent(Event.Type.PLAYER_JOIN, chatListener, Priority.Normal, this);
         
         PluginDescriptionFile pdfFile = this.getDescription();
@@ -62,6 +62,8 @@ public class Conversations extends JavaPlugin {
         
     }
 
+    // TODO add a prefix option for conversations
+
     /**
      * The conversation manager for a player.
      * 
@@ -86,6 +88,7 @@ public class Conversations extends JavaPlugin {
             manager = managers.get(playerName);
         } else {
             manager = new ConversationManager(this, playerName);
+            System.out.println("New manager: "+manager);
             managers.put(playerName, manager);
         }
         return manager;
@@ -96,7 +99,6 @@ public class Conversations extends JavaPlugin {
      * @param manager
      */
     void manageThread(ConversationManager manager) {
-        System.out.println("managing threads");
         if (manager == null) {
             return;
         }
@@ -105,8 +107,10 @@ public class Conversations extends JavaPlugin {
         if (managerTasks.containsKey(manager)) {
             task = managerTasks.get(manager);
             if (scheduler.isCurrentlyRunning(task)) {
+                System.out.println(manager+" still running.");
                 return;
             } else {
+                System.out.println("Starting up "+manager);
                 task = scheduler.scheduleAsyncDelayedTask(this, manager);
             }
         } else {

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 
 public class ConversationManager implements Runnable{
@@ -22,6 +23,7 @@ public class ConversationManager implements Runnable{
     private ConversationAgent currentAgent;
     private int questions;
     private boolean waitingForReply;
+    private Question currentQuestion;
 
     public ConversationManager(Conversations plugin, String playerName) {
         this.plugin = plugin;
@@ -35,37 +37,52 @@ public class ConversationManager implements Runnable{
     public void run() {
         while(conversing()){
             try {
-            // pick an agent to be active - the next in the queue sounds good
-            currentAgent = conversations.poll();
-            if (currentAgent != null) {
-                while (!currentAgent.messages.isEmpty()) {
-                    // lets send all messages, ask all questions for this agent.
-                    // TODO handle the conversation ending prematurely
-                    //  - if plugin or player hangs up
-                    //  - if player times out
-                    if (waitingForReply) {
-                        // if a question is asked, wait for a reply - just wait, as the reply is handled by ChatListener
+                // pick an agent to be active - the next in the queue sounds good
+                currentAgent = conversations.poll();
+                System.out.println("currentAgent is now "+currentAgent);
+                if (currentAgent != null) {
+                    while (waitingForReply || !currentAgent.messages.isEmpty()) {
+                        // lets send all messages, ask all questions for this agent.
+                        // TODO handle the conversation ending prematurely
+                        //  - if plugin or player hangs up
+                        //  - if player times out
+                        if (waitingForReply) {
+                            // if a question is asked, wait for a reply - just wait, as the reply is handled by ChatListener
                             Thread.sleep(WAIT_FOR_REPLY);
-                    } else {
-                        // send questions and messages, in order they are given
-                        Message currentMessage = currentAgent.messages.poll();
-                        if (currentMessage != null) {
-                            // TODO questions have a player - maybe check it here?
-                            //player.sendMessage(currentMessage.getMessage());
-                            currentMessage.send(plugin.getServer());
-                            if (currentMessage instanceof Question) {
-                                // when we send a question, we wait for a reply
-                                waitingForReply = true;
+                        } else {
+                            // send questions and messages, in order they are given
+                            Message currentMessage = currentAgent.messages.poll();
+                            System.out.println("Dealing with message '"+currentMessage.getMessage()+"'");
+                            if (currentMessage != null) {
+                                try {
+                                    // TODO questions have a player - maybe check it here?
+                                    //player.sendMessage(currentMessage.getMessage());
+                                    /*
+                                Method sendmethod = Message.class.getDeclaredMethod("send", Server.class);
+                                sendmethod.setAccessible(true);
+                                sendmethod.invoke(currentMessage, plugin.getServer());*/
+                                    sendMessage(currentMessage);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                //currentMessage.send(plugin.getServer());
+                                if (currentMessage instanceof Question) {
+                                    // when we send a question, we wait for a reply
+                                    currentQuestion = (Question) currentMessage;
+                                    waitingForReply = true;
+                                }
+                                // wait some time after sending each message
+                                Thread.sleep(currentMessage.getMessage().length() * WAIT_PER_CHARACTER);
                             }
-                            // wait some time after sending each message
-                            Thread.sleep(currentMessage.getMessage().length() * WAIT_PER_CHARACTER);
+                        }
+                        if (currentAgent == null) {
+                            System.out.println(">>>> how did the agent get null!?");
                         }
                     }
+                    // add conversation to the end of the queue
+                    //conversations.add(currentAgent);
                 }
-                // add conversation to the end of the queue
-                //conversations.add(currentAgent);
-            }
-            
+
                 Thread.sleep(500);
                 if (!waitingForReply) {
                     currentAgent = null;
@@ -82,11 +99,14 @@ public class ConversationManager implements Runnable{
                 return;
             }
         }
+        System.out.println("Manager finished.");
     }
 
     /**
      * When should this manager die?
      * also, what if the manager is killed prematurely???
+     * 
+     * For now, keep going as long as the player is online, and we have no new conversations.
      * @return
      */
     private boolean conversing() {
@@ -110,6 +130,7 @@ public class ConversationManager implements Runnable{
         if (agents.containsKey(listener)){
             agent = agents.get(listener);
         } else {
+            System.out.println("Creating agent as it does not exist yet.");
             agent = new ConversationAgent(this, listener);
             agents.put(listener, agent);
         }
@@ -118,9 +139,7 @@ public class ConversationManager implements Runnable{
 
     public boolean newReply(String reply) {
         boolean replied;
-        
-        replied = (currentAgent == null)?false:currentAgent.sendReply(reply);
-        System.out.println("player chat event");
+        replied = (currentAgent == null)?false:currentAgent.sendReply(currentQuestion, reply);
         if (replied) {
             waitingForReply = false;
             this.questions--; // question has been dealt with
@@ -137,14 +156,46 @@ public class ConversationManager implements Runnable{
      * @return the number of questions before this one
      */
     public int newQuestion(ConversationAgent conversationAgent, Message question) {
-        conversations.add(conversationAgent);
+        if (!conversations.contains(conversationAgent)) {
+            conversations.add(conversationAgent);
+        }
         plugin.manageThread(this);
         return this.questions++;
     }
 
     public void newMessage(ConversationAgent conversationAgent, Message message) {
-        conversations.add(conversationAgent);
+        if (!conversations.contains(conversationAgent)) {
+            conversations.add(conversationAgent);
+        }
         plugin.manageThread(this);
     }
 
+    final boolean sendMessage(Message message){
+        synchronized(this) {
+            Server server = plugin.getServer();
+            boolean sent;
+            /*
+            try {
+                System.out.println("This is " + this.getClass().getPackage() + ", a part of " + this.getClass().getClassLoader() + " opposed to " + message.getClass().getPackage() + " which is a part of " + message.getClass().getClassLoader());
+                sent = message.send(server);
+            } catch (Exception e){
+                e.printStackTrace();
+                System.out.println("Error occured: Trying to send message anyway.");
+            */
+            //System.out.println(message.getClass().getPackage());
+                Player player = message.getPlayer(server);
+                if (player != null && player.isOnline()) {
+                    player.sendMessage(message.getMessage());
+                    sent = true;
+                } else {
+                    sent = false;
+                }
+            //}
+            return sent;
+        }
+    }
+    
+    public String toString() {
+        return playerName+"_ConversationManager"+Integer.toHexString(hashCode());
+    }
 }
