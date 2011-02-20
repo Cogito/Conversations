@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Server;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -42,6 +45,25 @@ public class Conversations extends JavaPlugin {
         
         PluginDescriptionFile pdfFile = this.getDescription();
         System.out.println( pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!" );
+    }
+
+    public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
+        String commandName = command.getName().toLowerCase();
+        
+        Player player = null;
+        if (sender instanceof Player) {
+            player = (Player)sender;
+        }
+        // do not parse any commands as a player unless the command sender is the player.
+
+        if (commandName.equals("bob")) {
+            return parseCommands(sender, player, args);
+        }
+        return false;
+    }
+
+    private boolean parseCommands(CommandSender sender, Player player, String[] args) {
+        return false;
     }
 
     /**
@@ -104,8 +126,9 @@ public class Conversations extends JavaPlugin {
             if (manager == null) {
                 return;
             }
-            BukkitScheduler scheduler = getServer().getScheduler();
-            Integer task;
+            if (!hasRunningTask(manager)) {
+                managerTasks.put(manager, getServer().getScheduler().scheduleAsyncDelayedTask(this, manager));
+            }/*
             if (managerTasks.containsKey(manager)) {
                 task = managerTasks.get(manager);
                 if (scheduler.isCurrentlyRunning(task)) {
@@ -119,7 +142,17 @@ public class Conversations extends JavaPlugin {
                 System.out.println("Starting up "+manager);
                 task = scheduler.scheduleAsyncDelayedTask(this, manager);
             }
-            managerTasks.put(manager, task);
+            managerTasks.put(manager, task);*/
         }
+    }
+
+    private boolean hasRunningTask(ConversationManager manager) {
+        if (managerTasks.containsKey(manager)) {
+            Integer task = managerTasks.get(manager);
+            if (getServer().getScheduler().isCurrentlyRunning(task)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
