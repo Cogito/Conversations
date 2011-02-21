@@ -1,18 +1,15 @@
 package com.cogito.bukkit.conversations;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -25,19 +22,19 @@ public class Conversations extends JavaPlugin {
     private final ChatListener chatListener = new ChatListener(this);
     private Map<ConversationManager, Integer> managerTasks;
 
-    public Conversations(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader) {
-        super(pluginLoader, instance, desc, folder, plugin, cLoader);
-        managers = Collections.synchronizedMap(new HashMap<String, ConversationManager>());
-        managerTasks = Collections.synchronizedMap(new HashMap<ConversationManager, Integer>());
-    }
-
     public void onDisable() {
-        // TODO Auto-generated method stub
         getServer().getScheduler().cancelTasks(this);
+        // TODO unload these properly
+        /*
+        managers.clear();
         managerTasks.clear();
+        */
     }
 
     public void onEnable() {
+        managers = Collections.synchronizedMap(new HashMap<String, ConversationManager>());
+        managerTasks = Collections.synchronizedMap(new HashMap<ConversationManager, Integer>());
+
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvent(Event.Type.PLAYER_CHAT, chatListener, Priority.Normal, this);
         //pm.registerEvent(Event.Type.PLAYER_COMMAND, chatListener, Priority.Normal, this);
