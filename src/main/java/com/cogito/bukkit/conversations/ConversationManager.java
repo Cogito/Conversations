@@ -15,6 +15,8 @@ public class ConversationManager implements Runnable{
     private static final int WAIT_FOR_REPLY = 500;
     private static final int WAIT_PER_CHARACTER = 10;
     
+    public static int count = 0;
+    
     Conversations plugin;
     private String playerName;
     private Player player;
@@ -39,7 +41,7 @@ public class ConversationManager implements Runnable{
             try {
                 // pick an agent to be active - the next in the queue sounds good
                 currentAgent = conversations.poll();
-                System.out.println("currentAgent is now "+currentAgent);
+                //System.out.println("currentAgent is now "+currentAgent);
                 if (currentAgent != null) {
                     while (waitingForReply || !currentAgent.messages.isEmpty()) {
                         // lets send all messages, ask all questions for this agent.
@@ -54,7 +56,7 @@ public class ConversationManager implements Runnable{
                             // send questions and messages, in order they are given
                             Message currentMessage = currentAgent.messages.poll();
                             if (currentMessage != null) {
-                                System.out.println("Dealing with message '"+currentMessage.getMessage()+"'");
+                                //System.out.println("Dealing with message '"+currentMessage.getMessage()+"'");
                                 try {
                                     // TODO questions have a player - maybe check it here?
                                     //player.sendMessage(currentMessage.getMessage());
@@ -64,7 +66,7 @@ public class ConversationManager implements Runnable{
                                 }
                                 //currentMessage.send(plugin.getServer());
                                 if (currentMessage instanceof Question) {
-                                    System.out.println("Waiting for reply.");
+                                    //System.out.println("Waiting for reply.");
                                     // when we send a question, we wait for a reply
                                     currentQuestion = (Question) currentMessage;
                                     waitingForReply = true;
@@ -84,7 +86,7 @@ public class ConversationManager implements Runnable{
                     currentAgent = null;
                 }
             } catch (InterruptedException e) {
-                System.out.println("Shutting down conversation");
+                //System.out.println("Shutting down conversation");
                 Iterator<ConversationAgent> itr = conversations.iterator();
                 while (itr.hasNext()) {
                     ConversationAgent agent = itr.next();
@@ -95,7 +97,7 @@ public class ConversationManager implements Runnable{
                 return;
             }
         }
-        System.out.println(this + " finished.");
+        //System.out.println(this + " finished.");
     }
 
     /**
@@ -126,7 +128,7 @@ public class ConversationManager implements Runnable{
         if (agents.containsKey(listener)){
             agent = agents.get(listener);
         } else {
-            System.out.println("Creating agent as it does not exist yet.");
+            //System.out.println("Creating agent as it does not exist yet.");
             agent = new ConversationAgent(this, listener);
             agents.put(listener, agent);
         }
@@ -134,10 +136,10 @@ public class ConversationManager implements Runnable{
     }
 
     public boolean newReply(String reply) {
-        System.out.println("Reply received: "+reply);
         boolean replied;
         replied = (currentAgent == null)?false:currentAgent.sendReply(currentQuestion, reply);
         if (replied) {
+            // System.out.println("Reply received: "+reply);
             waitingForReply = false;
             this.questions--; // question has been dealt with
         }
@@ -193,6 +195,6 @@ public class ConversationManager implements Runnable{
     }
     
     public String toString() {
-        return playerName+"_ConversationManager"+Integer.toHexString(hashCode());
+        return playerName+"_ConversationManager@"+Integer.toHexString(hashCode());
     }
 }

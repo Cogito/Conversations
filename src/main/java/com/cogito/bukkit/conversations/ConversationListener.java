@@ -35,4 +35,13 @@ public interface ConversationListener {
      */
     public boolean onReply(Question question, String reply);
 
+    /**
+     * The name of this ConversationListener.
+     * 
+     * The name should be a short, meaningful name that will be prefixed to the start of every message or question you send.
+     * If it is null, no prefix would be used, though it is advised that a prefix is used where ever possible.
+     * 
+     * @return The name to be displayed to Players in conversation with this Listener, or null if it does not have one.
+     */
+    public String getName();
 }

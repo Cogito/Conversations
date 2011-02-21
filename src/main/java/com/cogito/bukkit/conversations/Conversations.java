@@ -100,18 +100,18 @@ public class Conversations extends JavaPlugin {
     ConversationManager getManager(String playerName) {
         ConversationManager manager;
         if (managers == null) {
-            System.out.println("managers has not been instantiated!!!");
+            //System.out.println("managers has not been instantiated!!!");
             return null;
         }
         if (playerName == null) {
-            System.out.println("player is null!!!");
+            //System.out.println("player is null!!!");
             return null;
         }
         if (managers.containsKey(playerName)){
             manager = managers.get(playerName);
         } else {
             manager = new ConversationManager(this, playerName);
-            System.out.println("New manager: "+manager);
+            //System.out.println("New manager: "+manager);
             managers.put(playerName, manager);
         }
         return manager;
@@ -126,32 +126,23 @@ public class Conversations extends JavaPlugin {
             if (manager == null) {
                 return;
             }
-            if (!hasRunningTask(manager)) {
+            if (!hasTask(manager)) {
                 managerTasks.put(manager, getServer().getScheduler().scheduleAsyncDelayedTask(this, manager));
-            }/*
-            if (managerTasks.containsKey(manager)) {
-                task = managerTasks.get(manager);
-                if (scheduler.isCurrentlyRunning(task)) {
-                    System.out.println(manager+" still running.");
-                    return;
-                } else {
-                    System.out.println("Starting up "+manager);
-                    task = scheduler.scheduleAsyncDelayedTask(this, manager);
-                }
-            } else {
-                System.out.println("Starting up "+manager);
-                task = scheduler.scheduleAsyncDelayedTask(this, manager);
             }
-            managerTasks.put(manager, task);*/
         }
     }
 
-    private boolean hasRunningTask(ConversationManager manager) {
+    private boolean hasTask(ConversationManager manager) {
+        //System.out.println("Checking if "+manager+" has running task:");
         if (managerTasks.containsKey(manager)) {
-            Integer task = managerTasks.get(manager);
-            if (getServer().getScheduler().isCurrentlyRunning(task)) {
+            //System.out.print("- a previous task exists, ");
+            BukkitScheduler scheduler = getServer().getScheduler();
+            Integer taskId = managerTasks.get(manager);
+            if (scheduler.isQueued(taskId) || scheduler.isCurrentlyRunning(taskId)) {
+                //System.out.println("and it is running or queued. SUCCESS");
                 return true;
             }
+            //System.out.println("but isn't running or queued. FAIL");
         }
         return false;
     }

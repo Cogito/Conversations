@@ -15,11 +15,12 @@ public class ChatListener extends PlayerListener {
     public void onPlayerChat(PlayerChatEvent event) {
         ConversationManager conversation = plugin.getManager(event.getPlayer().getName());
         if (conversation == null) {
-            System.out.println("no manager could be found :(");
+            //System.out.println("no manager could be found :(");
             return;
         }
         // send the reply, and check if the reply was accepted
         if (conversation.newReply(event.getMessage())) {
+            // echo the player's chat back to them.
             event.getPlayer().sendMessage("["+event.getPlayer().getDisplayName()+"] "+event.getMessage());
             event.setCancelled(true);
         }

@@ -30,7 +30,6 @@ public class ConversationAgent {
      * @param message the message to be sent as part of this conversation.
      */
     public void sendMessage(Message message){
-        // TODO sync properly
         this.messages.add(message);
         manager.newMessage(this, message);
     }
@@ -50,7 +49,6 @@ public class ConversationAgent {
      * @return true if there are no questions queued before this one, and no active question.
      */
     public boolean sendQuestion(Question question){
-        // TODO sync properly
         this.messages.add(question);
         return (manager.newQuestion(this, question) == 0);
     }
@@ -61,6 +59,6 @@ public class ConversationAgent {
     }
     
     public String toString() {
-        return listener.toString()+"_ConversationAgent"+Integer.toHexString(hashCode())+" Messages: "+messages.toString();
+        return listener.toString()+"_ConversationAgent@"+Integer.toHexString(hashCode())+" Messages: "+messages.toString();
     }
 }
